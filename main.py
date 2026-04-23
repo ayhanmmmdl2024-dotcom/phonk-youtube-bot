@@ -4,6 +4,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseUpload
 from google.oauth2.credentials import Credentials
 import io
+import mimetypes # Şəkil növünü müəyyən etmək üçün
 
 # Secrets
 DROPBOX_TOKEN = os.environ.get("DROPBOX_TOKEN")
@@ -14,8 +15,7 @@ YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 DROPBOX_FOLDER = "/Phonk Videos" 
 
 def get_formatted_metadata(filename):
-    # Fayl adından (.mp4) hissəsini silirik. 
-    # Əgər fayl adı "Kabus.mp4"-dirsə, track_name "Kabus" olacaq.
+    # Fayl adından (.mp4) hissəsini silirik.
     track_name = os.path.splitext(filename)[0]
     
     # Başlıq formatı (Na.Camara ilə)
@@ -55,16 +55,36 @@ def get_youtube_service():
     )
     return build("youtube", "v3", credentials=creds)
 
-def upload_to_youtube(video_data, filename):
+def upload_thumbnail(youtube, video_id, thumbnail_data, thumbnail_filename):
+    """YouTube-a videonun qapaq şəklini yükləyir."""
+    # Şəkil növünü (jpeg, png) müəyyən edək
+    mimetype = mimetypes.guess_type(thumbnail_filename)[0] or 'application/octet-stream'
+    
+    media = MediaIoBaseUpload(io.BytesIO(thumbnail_data), mimetype=mimetype, resumable=True)
+    
+    try:
+        print(f"Thumbnail yüklənir: {thumbnail_filename}...")
+        request = youtube.thumbnails().set(
+            videoId=video_id,
+            media_body=media
+        )
+        response = request.execute()
+        print("Thumbnail uğurla yükləndi!")
+        return response
+    except Exception as e:
+        print(f"Thumbnail yükləmə xətası: {e}")
+        return None
+
+def upload_to_youtube(video_data, filename, youtube_service):
+    """Videonu yükləyir və video_id-ni qaytarır."""
     title, description, tags = get_formatted_metadata(filename)
-    youtube = get_youtube_service()
     
     body = {
         "snippet": {
             "title": title,
             "description": description,
             "tags": tags,
-            "categoryId": "10" 
+            "categoryId": "10" # Music kateqoriyası
         },
         "status": {
             "privacyStatus": "public",
@@ -73,7 +93,7 @@ def upload_to_youtube(video_data, filename):
     }
     
     media = MediaIoBaseUpload(io.BytesIO(video_data), mimetype="video/mp4", resumable=True, chunksize=10*1024*1024)
-    request = youtube.videos().insert(part="snippet,status", body=body, media_body=media)
+    request = youtube_service.videos().insert(part="snippet,status", body=body, media_body=media)
     
     response = None
     while response is None:
@@ -84,30 +104,69 @@ def upload_to_youtube(video_data, filename):
     print(f"Uploaded successfully! Video ID: {response['id']}")
     return response['id']
 
+def check_for_thumbnail(dbx, video_filename):
+    """Video faylının adına uyğun thumbnail (jpeg, png) şəklini Dropbox-da axtarır."""
+    base_name = os.path.splitext(video_filename)[0]
+    
+    # Şəkil uzantılarını yoxlayırıq
+    for ext in ['.jpg', '.jpeg', '.png']:
+        thumbnail_path = f"{DROPBOX_FOLDER}/{base_name}{ext}"
+        try:
+            _, response = dbx.files_download(thumbnail_path.lower())
+            print(f"Thumbnail tapıldı: {thumbnail_path}")
+            return response.content, f"{base_name}{ext}" # Şəkil datasını və tam adını qaytarırıq
+        except dropbox.exceptions.ApiError:
+            continue # Bu şəkil yoxdursa, digərini yoxla
+            
+    return None, None # Thumbnail yoxdursa
+
 def main():
     if not DROPBOX_TOKEN:
         print("Error: DROPBOX_TOKEN not found!")
         return
 
     dbx = dropbox.Dropbox(DROPBOX_TOKEN)
+    youtube_service = get_youtube_service() # YouTube servisini bir dəfə yaradaq
     
     try:
         result = dbx.files_list_folder(DROPBOX_FOLDER)
         files_found = False
 
-        for entry in result.entries:
+        # Öncə bütün faylları siyahıya alaq ki, videoları və şəkilləri ayıra bilək
+        entries = result.entries
+        
+        for entry in entries:
             if isinstance(entry, dropbox.files.FileMetadata):
+                # Sadəcə video faylları emal et
                 if entry.name.lower().endswith(('.mp4', '.mov', '.avi')):
                     files_found = True
-                    print(f"Processing: {entry.name}")
+                    print(f"\nProcessing Video: {entry.name}")
                     
-                    _, response = dbx.files_download(entry.path_lower)
-                    video_data = response.content
+                    # 1. Videonu Dropbox-dan yüklə
+                    _, video_response = dbx.files_download(entry.path_lower)
+                    video_data = video_response.content
                     
                     try:
-                        upload_to_youtube(video_data, entry.name)
+                        # 2. Videonu YouTube-a yüklə
+                        video_id = upload_to_youtube(video_data, entry.name, youtube_service)
+                        
+                        # 3. Thumbnail yoxla
+                        thumbnail_data, thumbnail_filename = check_for_thumbnail(dbx, entry.name)
+                        
+                        # 4. Varsa, thumbnail yüklə
+                        if thumbnail_data and video_id:
+                            upload_thumbnail(youtube_service, video_id, thumbnail_data, thumbnail_filename)
+                        
+                        # 5. Təmizlik: Videonu Dropbox-dan sil
                         dbx.files_delete_v2(entry.path_lower)
-                        print(f"Deleted from Dropbox: {entry.name}")
+                        print(f"Deleted Video from Dropbox: {entry.name}")
+                        
+                        # 6. Təmizlik: Varsa, Thumbnail-i də sil
+                        if thumbnail_data:
+                            thumbnail_path = f"{DROPBOX_FOLDER}/{thumbnail_filename}"
+                            dbx.files_delete_v2(thumbnail_path.lower())
+                            print(f"Deleted Thumbnail from Dropbox: {thumbnail_filename}")
+                            
                     except Exception as yt_err:
                         print(f"YouTube upload failed: {yt_err}")
 
