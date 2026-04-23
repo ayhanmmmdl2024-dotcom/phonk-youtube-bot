@@ -1,7 +1,9 @@
 name: YouTube Phonk Uploader
+
 on:
-  workflow_dispatch: # Bu düyməni sıxanda bot işə düşəcək
-  # İstersən bura schedule əlavə edib hər gün eyni saatda işlədə bilərik
+  schedule:
+    - cron: '0 */3 * * *'  # Hər 3 saatdan bir avtomatik işləyir
+  workflow_dispatch:      # İstədiyin vaxt əllə başlatmaq üçün düyməni saxlayır
 
 jobs:
   upload:
