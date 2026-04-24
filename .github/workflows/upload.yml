@@ -3,25 +3,29 @@ name: YouTube Phonk Uploader
 on:
   schedule:
     - cron: '0 */3 * * *'  # Hər 3 saatdan bir avtomatik işləyir
-  workflow_dispatch:      # İstədiyin vaxt əllə başlatmaq üçün düyməni saxlayır
+  workflow_dispatch:      # Əllə başlatmaq üçün düymə
 
 jobs:
   upload:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: pip install dropbox google-api-python-client google-auth-oauthlib requests
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install dropbox google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+
       - name: Run Script
         env:
-         DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
           DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
           DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
