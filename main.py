@@ -7,7 +7,10 @@ import io
 import mimetypes
 
 # Secrets (GitHub Settings -> Secrets hissəsindən götürülür)
-DROPBOX_TOKEN = os.environ.get("DROPBOX_TOKEN")
+# Köhnə DROPBOX_TOKEN yerinə bunları yaz:
+DROPBOX_APP_KEY = os.environ.get("DROPBOX_APP_KEY")
+DROPBOX_APP_SECRET = os.environ.get("DROPBOX_APP_SECRET")
+DROPBOX_REFRESH_TOKEN = os.environ.get("DROPBOX_REFRESH_TOKEN")
 YOUTUBE_CLIENT_ID = os.environ.get("YOUTUBE_CLIENT_ID")
 YOUTUBE_CLIENT_SECRET = os.environ.get("YOUTUBE_CLIENT_SECRET")
 YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
