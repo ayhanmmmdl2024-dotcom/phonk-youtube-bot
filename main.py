@@ -18,8 +18,13 @@ YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 DROPBOX_FOLDER = "/Phonk Videos" 
 
 def get_formatted_metadata(filename):
-    """Videonun adına görə başlıq və təsviri təyin edir."""
-    track_name = os.path.splitext(filename)[0]
+    # .mp4 və ya .MP4 nə varsa hamısını silirik
+    track_name = filename.replace('.mp4', '').replace('.MP4', '').replace('.mov', '')
+    
+    # İndi başlıqları təmiz adla yaradaq
+    clean_name = track_name.replace('_', ' ').replace('- shorts', '').strip().capitalize()
+    
+    # ... qalan if/else hissəsi eyni qala bilər ...
     
     # Əgər fayl adında 'shorts' varsa (məs: Kabus_shorts.mp4)
     if "shorts" in filename.lower():
@@ -153,11 +158,12 @@ def main():
                 v_id = video_response['id']
                 print(f"Video yükləndi! ID: {v_id}")
                 
-               # 3. Thumbnail yoxla və yüklə
+            # 3. Thumbnail yoxla və yüklə
         thumb_data, thumb_name = check_for_thumbnail(dbx, entry.name)
         if thumb_data:
+            print(f"Üz qabığı yüklənir: {thumb_name}")
             upload_thumbnail(youtube, v_id, thumb_data, thumb_name)
-            # Silmə zamanı da .lower() istifadə etmirik ki, dəqiq faylı tapsın
+            # Yüklənmiş şəkli Dropbox-dan silirik
             dbx.files_delete_v2(f"{DROPBOX_FOLDER}/{thumb_name}")
                 
                 # 4. Dropbox-dan sil
