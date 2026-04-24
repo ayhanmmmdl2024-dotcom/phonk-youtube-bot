@@ -46,15 +46,16 @@ ____________________________________________________
 Music produced by Na.Camara
 All rights reserved ©2026"""
         tags = ["phonk", "darkphonk", "music", "shorts", "bass"]
-    else:
-        # Normal uzun video formatı
-        title = f"Na.Camara - {track_name} (Original Track)"
-        description = f"""🔥 Na.Camara - Phonk/Brazilian Funk
+   else:
+        # Fayl adındakı altdan xətləri təmizləyirik (məs: meia_noite -> Meia noite)
+        display_name = track_name.replace('_', ' ').capitalize()
+        
+        # .mp4 yazısı olmadan təmiz başlıq
+        title = f"{display_name} - Na.Camara (Original Track)"
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n\n🎵 Track: {display_name}\n\n#phonk #darkphonk #music"
 ____________________________________________________
-
-🎵 Track: {track_name}
-🎧 Genre: Brazilian Funk / Dark Phonk
-🎚️ Style: Slowed + Reverb
+# 56-cı sətirdən sonranı belə tənzimləyə bilərsən:
+        description += f"\n🎵 Track: {display_name}\n🎧 Genre: Brazilian Funk / Dark Phonk\n🎬 Style: Slowed + Reverb"
 ____________________________________________________
 
 🎧 Best experienced with headphones
@@ -98,7 +99,7 @@ def check_for_thumbnail(dbx, video_filename):
     for ext in ['.jpg', '.jpeg', '.png']:
         path = f"{DROPBOX_FOLDER}/{base_name}{ext}"
         try:
-            _, res = dbx.files_download(path.lower())
+           _, res = dbx.files_download(path)
             return res.content, f"{base_name}{ext}"
         except:
             continue
@@ -152,11 +153,12 @@ def main():
                 v_id = video_response['id']
                 print(f"Video yükləndi! ID: {v_id}")
                 
-                # 3. Thumbnail yoxla və yüklə
-                thumb_data, thumb_name = check_for_thumbnail(dbx, entry.name)
-                if thumb_data:
-                    upload_thumbnail(youtube, v_id, thumb_data, thumb_name)
-                    dbx.files_delete_v2(f"{DROPBOX_FOLDER}/{thumb_name}".lower())
+               # 3. Thumbnail yoxla və yüklə
+        thumb_data, thumb_name = check_for_thumbnail(dbx, entry.name)
+        if thumb_data:
+            upload_thumbnail(youtube, v_id, thumb_data, thumb_name)
+            # Silmə zamanı da .lower() istifadə etmirik ki, dəqiq faylı tapsın
+            dbx.files_delete_v2(f"{DROPBOX_FOLDER}/{thumb_name}")
                 
                 # 4. Dropbox-dan sil
                 dbx.files_delete_v2(entry.path_lower)
