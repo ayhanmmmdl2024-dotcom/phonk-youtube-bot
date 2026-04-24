@@ -18,13 +18,13 @@ YOUTUBE_REFRESH_TOKEN = os.environ.get("YOUTUBE_REFRESH_TOKEN")
 DROPBOX_FOLDER = "/Phonk Videos" 
 
 def get_formatted_metadata(filename):
-    # .mp4 və ya .MP4 nə varsa hamısını silirik
+    # Uzantıları təmizləyirik
     track_name = filename.replace('.mp4', '').replace('.MP4', '').replace('.mov', '')
     
-    # İndi başlıqları təmiz adla yaradaq
-    clean_name = track_name.replace('_', ' ').replace('- shorts', '').strip().capitalize()
+    # .upper() əlavə edirik ki, hər yerdə BÖYÜK hərflə görünsün
+    clean_name = track_name.replace('_', ' ').replace('- shorts', '').strip().upper()
     
-    # ... qalan if/else hissəsi eyni qala bilər ...
+    # ... qalan if/else bloku eyni qalır ...
     
     # Əgər fayl adında 'shorts' varsa (məs: Kabus_shorts.mp4)
     if "shorts" in filename.lower():
@@ -159,6 +159,28 @@ def main():
                 print(f"Video yükləndi! ID: {v_id}")
                 
             # 3. Thumbnail yoxla və yüklə
+            def check_for_thumbnail(dbx, video_filename):
+    # Videonun təmiz adını alırıq
+    base_name = video_filename.replace('.mp4', '').replace('.MP4', '').replace('.mov', '').strip().lower()
+    
+    try:
+        # Dropbox qovluğundakı hər şeyə baxırıq
+        files = dbx.files_list_folder(DROPBOX_FOLDER).entries
+        
+        for file in files:
+            # Faylın adını və uzantısını ayırırıq
+            f_name, f_ext = os.path.splitext(file.name)
+            
+            # Əgər adlar (kiçik hərflə müqayisədə) eynidirsə və fayl şəkildirsə
+            if f_name.lower() == base_name and f_ext.lower() in ['.jpg', '.jpeg', '.png']:
+                print(f"Uyğun şəkil tapıldı: {file.name}")
+                # Şəkli yükləmək üçün path_lower istifadə edirik
+                _, res = dbx.files_download(file.path_lower)
+                return res.content, file.name
+    except Exception as e:
+        print(f"Thumbnail axtarışında xəta: {e}")
+        
+    return None, None
         thumb_data, thumb_name = check_for_thumbnail(dbx, entry.name)
         if thumb_data:
             print(f"Üz qabığı yüklənir: {thumb_name}")
