@@ -28,36 +28,47 @@ def get_formatted_metadata(filename):
     
     # Əgər fayl adında 'shorts' varsa (məs: Kabus_shorts.mp4)
     if "shorts" in filename.lower():
-        clean_name = track_name.lower().replace('_shorts', '').capitalize()
-        # Sənin istədiyin Shorts formatı
-        title = f"/{clean_name} - Na.Camara/ #darkphonk #music #bass #driftphonk #phonk #phonkmusic #funk"
-        description = f"""🔥 Na.Camara - Phonk/Brazilian Funk
-____________________________________________________
-
-🎵 Track: {clean_name}
-🎧 Genre: Brazilian Funk / Dark Phonk
-🎚️ Style: Slowed + Reverb
-____________________________________________________
-
-🎧 Best experienced with headphones
-🔊 Turn up the volume
-____________________________________________________
-
-📌 Tags:
-#phonk #darkphonk #brazilianphonkmusic #slowed #slowedreverbmusicmashup #phonkmusic #funk #inferno #music
-____________________________________________________
+        # 1. Shorts üçün adı təmizləyib BÖYÜK hərflə edirik
+        clean_name = track_name.replace('_shorts', '').replace('_', ' ').strip().upper()
+        
+        # 2. Shorts Başlığı (Title)
+        title = f"{clean_name} - Na.Camara/ #darkphonk #music #bass #shorts #phonk"
+        
+        # 3. Shorts Təsviri (Description)
+        sep = "─── ⋆⋅☆⋅⋆ ───"
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n"
+        description += f"{sep}\n\n"
+        description += f"🎵 Track: {clean_name}\n"
+        description += f"🎧 Style: Brazilian Funk / Dark Phonk\n\n"
+        description += f"{sep}\n\n"
+        description += "📌 Tags:\n#phonk #shorts #darkphonk #music #bass #funk"
+        
+        tags = ["phonk", "darkphonk", "music", "shorts", "bass"]
 
 ⚠️ Copyright:
 Music produced by Na.Camara
 All rights reserved ©2026"""
         tags = ["phonk", "darkphonk", "music", "shorts", "bass"]
    else:
-        # Fayl adındakı altdan xətləri təmizləyirik (məs: meia_noite -> Meia noite)
-        display_name = track_name.replace('_', ' ').capitalize()
+        # 1. Adı təmizləyib hamısını BÖYÜK hərflə edirik
+        display_name = track_name.replace('_', ' ').strip().upper()
         
-        # .mp4 yazısı olmadan təmiz başlıq
-        title = f"{display_name} - Na.Camara (Original Track)"
-        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n\n🎵 Track: {display_name}\n\n#phonk #darkphonk #music"
+        # 2. Başlıq nizamlanır
+        title = f"Na.Camara - {display_name} (Original Track)"
+        
+        # 3. Təsvir (Description) nizamlanır
+        sep = "─── ⋆⋅☆⋅⋆ ───"
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n"
+        description += f"{sep}\n\n"
+        description += f"🎵 Track: {display_name}\n"
+        description += f"🎧 Genre: Brazilian Funk / Dark Phonk\n"
+        description += f"🎼 Style: Slowed + Reverb\n\n"
+        description += f"{sep}\n\n"
+        description += "📢 Best experienced with headphones\n"
+        description += "🔊 Turn up the volume\n\n"
+        description += "📌 Tags:\n#phonk #darkphonk #brazilianphonk #music #funk #bass"
+        
+        tags = ["phonk", "darkphonk", "music", "bass"]
 ____________________________________________________
 # 56-cı sətirdən sonranı belə tənzimləyə bilərsən:
         description += f"\n🎵 Track: {display_name}\n🎧 Genre: Brazilian Funk / Dark Phonk\n🎬 Style: Slowed + Reverb"
