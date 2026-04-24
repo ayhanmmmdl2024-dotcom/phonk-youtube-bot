@@ -105,11 +105,26 @@ def check_for_thumbnail(dbx, video_filename):
     return None, None
 
 def main():
-    if not DROPBOX_TOKEN:
-        print("Xəta: DROPBOX_TOKEN tapılmadı!")
+    # Yeni Refresh Token sistemi üçün yoxlama
+    if not all([DROPBOX_APP_KEY, DROPBOX_APP_SECRET, DROPBOX_REFRESH_TOKEN]):
+        print("Xəta: Dropbox üçün lazımi açarlar (Key, Secret və ya Refresh Token) tapılmadı!")
         return
 
-    dbx = dropbox.Dropbox(DROPBOX_TOKEN)
+    # Dropbox-a Refresh Token ilə qoşulma (DOĞRU VARIANT)
+    try:
+        dbx = dropbox.Dropbox(
+            app_key=DROPBOX_APP_KEY,
+            app_secret=DROPBOX_APP_SECRET,
+            oauth2_refresh_token=DROPBOX_REFRESH_TOKEN
+        )
+        print("Dropbox bağlantısı Refresh Token ilə uğurla quruldu!")
+    except Exception as e:
+        print(f"Dropbox-a bağlanarkən xəta baş verdi: {e}")
+        return
+
+    youtube = get_youtube_service()
+    
+    # ... kodun ardı eyni qalır
     youtube = get_youtube_service()
     
     try:
