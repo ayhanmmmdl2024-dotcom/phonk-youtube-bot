@@ -20,39 +20,23 @@ DROPBOX_FOLDER = "/Phonk Videos"
 
 def get_formatted_metadata(filename):
     """Fayl adından YouTube üçün başlıq, təsvir və teqlər yaradır."""
-    # .mp4 və ya .MP4 silirik
+    # .mp4 silirik
     track_name = filename.replace('.mp4', '').replace('.MP4', '').replace('.mov', '')
     
     # Başlıqları təmizləyirik (Böyük hərflə)
-    display_name = track_name.replace('_', ' ').replace('- shorts', '').strip().upper()
+    display_name = track_name.replace('_', ' ').replace('- shorts', '').replace('shorts', '').strip().upper()
     
-    # Təsvir (Description) hazırlayırıq
     sep = "———— ★·☆·★ ————"
-    description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n"
-    description += f"{sep}\n\n"
-    description += f"🎵 Track: {display_name}\n"
-    description += f"🎧 Genre: Brazilian Funk / Dark Phonk\n"
-    description += f"🎬 Style: Slowed + Reverb\n\n"
-    description += f"{sep}\n\n"
-    description += f"🎧 Best experienced with headphones\n"
-    description += f"🔊 Turn up the volume\n\n"
-    description += f"📌 Tags:\n#phonk #darkphonk #brazilianphonkmusic #slowed #slowedreverb #phonkmusic #funk #inferno #music\n\n"
-    description += f"{sep}\n\n"
-    description += f"⚠️ Copyright:\nMusic produced by Na.Camara\nAll rights reserved ©2026"
-
-    # Shorts yoxlanışı
-   if "shorts" in filename.lower():
-        # Köhnə variantda burada çoxlu hashtag var idi, hamısını sildik:
-        title = f"{display_name} - Na.Camara" 
-        
-        # Hashtagları başlığa yox, description (təsvir) hissəsinə qoyuruq ki, video Shorts kimi tanınsın:
-        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n{sep}\n\n🎵 Track: {display_name}\n\n{sep}\n#shorts #phonk #bass #darkphonk"
+    
+    # Shorts yoxlanışı və Başlıq nizamlanması
+    if "shorts" in filename.lower():
+        title = f"{display_name} - Na.Camara"
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n{sep}\n\n🎵 Track: {display_name}\n\n{sep}\n#shorts #phonk #bass #darkphonk #music"
     else:
-        # Normal videolar eyni qalır
         title = f"Na.Camara - {display_name} (Original Track)"
-    
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n{sep}\n\n🎵 Track: {display_name}\n🎬 Style: Slowed + Reverb\n\n{sep}\n#phonk #darkphonk #music #bass"
+
     tags = ["phonk", "darkphonk", "brazilian funk", "slowed", "reverb"]
-    
     return title, description, tags
 
 def get_youtube_service():
@@ -79,11 +63,14 @@ def upload_thumbnail(youtube, video_id, thumbnail_data, thumbnail_filename):
 def check_for_thumbnail(dbx, video_filename):
     """Dropbox-da uyğun şəkli axtarır."""
     base_name = os.path.splitext(video_filename)[0]
+    # Fayl adındakı sonluğu təmizləyirik (məs: "MAHNI_shorts" -> "MAHNI")
+    clean_base = base_name.replace('_shorts', '').replace('- shorts', '')
+    
     for ext in ['.jpg', '.jpeg', '.png', '.JPG', '.PNG']:
-        path = f"{DROPBOX_FOLDER}/{base_name}{ext}"
+        path = f"{DROPBOX_FOLDER}/{clean_base}{ext}"
         try:
             _, res = dbx.files_download(path)
-            return res.content, f"{base_name}{ext}"
+            return res.content, f"{clean_base}{ext}"
         except:
             continue
     return None, None
@@ -101,7 +88,7 @@ def main():
         )
         print("Dropbox bağlantısı uğurla quruldu!")
     except Exception as e:
-        print(f"Dropbox-a bağlanarkən xəta: {e}")
+        print(f"Dropbox xətası: {e}")
         return
 
     youtube = get_youtube_service()
@@ -132,18 +119,17 @@ def main():
                 v_id = video_response['id']
                 print(f"Video yükləndi! ID: {v_id}")
                 
-                # YouTube-un videonu qəbul etməsi üçün 5 saniyə gözlə
-                time.sleep(5)
+                time.sleep(5) # Gözləmə
                 
                 # 4. Thumbnail yoxla və yüklə
                 thumb_data, thumb_name = check_for_thumbnail(dbx, entry.name)
                 if thumb_data:
-                    print(f"Üz qabığı yüklənir: {thumb_name}")
                     upload_thumbnail(youtube, v_id, thumb_data, thumb_name)
-                    # Şəkli Dropbox-dan sil
-                    dbx.files_delete_v2(f"{DROPBOX_FOLDER}/{thumb_name}")
+                    try:
+                        dbx.files_delete_v2(f"{DROPBOX_FOLDER}/{thumb_name}")
+                    except: pass
                 
-                # 5. Videonu Dropbox-dan sil
+                # 5. Videonu sil
                 dbx.files_delete_v2(entry.path_lower)
                 print(f"Dropbox-dan silindi: {entry.name}")
                 
