@@ -41,9 +41,14 @@ def get_formatted_metadata(filename):
     description += f"⚠️ Copyright:\nMusic produced by Na.Camara\nAll rights reserved ©2026"
 
     # Shorts yoxlanışı
-    if "shorts" in filename.lower():
-        title = f"{display_name} - Na.Camara/ #darkphonk #music #bass #driftphonk #phonk #phonkmusic #funk"
+   if "shorts" in filename.lower():
+        # Köhnə variantda burada çoxlu hashtag var idi, hamısını sildik:
+        title = f"{display_name} - Na.Camara" 
+        
+        # Hashtagları başlığa yox, description (təsvir) hissəsinə qoyuruq ki, video Shorts kimi tanınsın:
+        description = f"🔥 Na.Camara - Phonk/Brazilian Funk\n{sep}\n\n🎵 Track: {display_name}\n\n{sep}\n#shorts #phonk #bass #darkphonk"
     else:
+        # Normal videolar eyni qalır
         title = f"Na.Camara - {display_name} (Original Track)"
     
     tags = ["phonk", "darkphonk", "brazilian funk", "slowed", "reverb"]
